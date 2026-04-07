@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evergreen Pure Veg | Smart Animated Menu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --evergreen: #2e7d32; --accent: #ef6c00; --bg: #f4f7f4; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; scroll-behavior: smooth; }
+        body { background-color: var(--bg); color: #333; padding-bottom: 100px; }
+
+        /* HEADER & SEARCH */
+        header {
+            background: white; padding: 20px; text-align: center;
+            border-bottom: 4px solid var(--evergreen);
+            position: sticky; top: 0; z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .logo { color: var(--evergreen); font-weight: 700; font-size: 1.6rem; }
+        .search-bar {
+            width: 90%; padding: 12px 20px; margin-top: 15px;
+            border: 2px solid #eee; border-radius: 25px; outline: none;
+            transition: 0.3s; font-size: 1rem;
+        }
+        .search-bar:focus { border-color: var(--evergreen); }
+
+        /* CATEGORY SLIDER */
+        .categories {
+            display: flex; overflow-x: auto; padding: 15px; gap: 10px;
+            background: white; white-space: nowrap;
+        }
+        .cat-btn {
+            background: #e8f5e9; color: var(--evergreen); padding: 8px 20px;
+            border-radius: 20px; font-weight: 600; font-size: 0.8rem; border: none;
+        }
+
+        /* MENU ITEMS */
+        .menu-section { padding: 15px; }
+        .section-title { color: var(--evergreen); margin: 20px 0 10px; font-size: 1.2rem; border-left: 4px solid var(--accent); padding-left: 10px; }
+
+        .item-card {
+            background: white; border-radius: 15px; display: flex; padding: 15px;
+            margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            opacity: 0; transform: translateY(20px);
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+        .item-img { width: 80px; height: 80px; background: #f0f0f0; border-radius: 12px; margin-right: 15px; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+        .item-info { flex: 1; }
+        .item-name { font-weight: 600; font-size: 1rem; }
+        .item-desc { font-size: 0.75rem; color: #777; margin: 4px 0; }
+        .price { color: var(--evergreen); font-weight: 700; font-size: 1.1rem; }
+
+        .add-btn {
+            background: var(--evergreen); color: white; border: none;
+            padding: 8px 18px; border-radius: 20px; font-weight: 600; align-self: center;
+        }
+
+        /* CART FAB */
+        #cartFab {
+            position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+            background: var(--evergreen); color: white; padding: 15px 40px;
+            border-radius: 50px; font-weight: 700; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            z-index: 1000; transition: 0.3s;
+        }
+        .bounce { animation: bounce 0.4s ease; }
+        @keyframes bounce { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.1); } }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">EVERGREEN</div>
+    <div style="color:#d63031; font-size:0.7rem; font-weight:700;">PURE VEGETARIAN</div>
+    <input type="text" id="search" class="search-bar" placeholder="Search for Dosa, Paneer, Thali..." onkeyup="searchMenu()">
+</header>
+
+<div class="categories">
+    <button class="cat-btn" onclick="filterCat('South')">South Indian</button>
+    <button class="cat-btn" onclick="filterCat('Thali')">Thalis</button>
+    <button class="cat-btn" onclick="filterCat('North')">North Indian</button>
+    <button class="cat-btn" onclick="filterCat('Chinese')">Indo-Chinese</button>
+</div>
+
+<div id="menuContent" class="menu-section"></div>
+
+<div id="cartFab" onclick="sendOrder()">
+    🛒 View Order (<span id="count">0</span>)
+</div>
+
+<script>
+    const menuData = [
+        { cat: 'South', name: "Ghee Roast", price: 14.00, desc: "Crispy golden crepe with pure ghee", icon: "🥞" },
+        { cat: 'South', name: "Masala Dosa", price: 13.00, desc: "Classic dosa with potato masala", icon: "🌯" },
+        { cat: 'South', name: "Idly (2 Pcs)", price: 7.00, desc: "Steamed rice cakes with sambar", icon: "⚪" },
+        { cat: 'South', name: "Vada (2 Pcs)", price: 8.00, desc: "Crispy lentil donuts", icon: "🍩" },
+        { cat: 'Thali', name: "Evergreen Deluxe Thali", price: 18.00, desc: "Complete traditional meal", icon: "🍱" },
+        { cat: 'Thali', name: "Mini Thali", price: 14.00, desc: "Quick portioned meal", icon: "🍛" },
+        { cat: 'North', name: "Paneer Butter Masala", price: 18.00, desc: "Creamy cottage cheese gravy", icon: "🥘" },
+        { cat: 'North', name: "Dal Fry", price: 12.00, desc: "Yellow lentils tempered with cumin", icon: "🥣" },
+        { cat: 'Chinese', name: "Veg Manchurian", price: 18.00, desc: "Veg dumplings in soy garlic sauce", icon: "🧆" },
+        { cat: 'Chinese', name: "Paneer 65", price: 18.00, desc: "Spicy deep fried paneer", icon: "🌶️" }
+    ];
+
+    let cart = [];
+
+    function renderMenu(items) {
+        const container = document.getElementById('menuContent');
+        container.innerHTML = items.map((i, index) => `
+            <div class="item-card" style="animation-delay: ${index * 0.05}s">
+                <div class="item-img">${i.icon}</div>
+                <div class="item-info">
+                    <div class="item-name">${i.name}</div>
+                    <div class="item-desc">${i.desc}</div>
+                    <div class="price">AED ${i.price.toFixed(2)}</div>
+                </div>
+                <button class="add-btn" onclick="addToCart('${i.name}')">Add</button>
+            </div>
+        `).join('');
+    }
+
+    function addToCart(name) {
+        cart.push(name);
+        document.getElementById('count').innerText = cart.length;
+        const fab = document.getElementById('cartFab');
+        fab.classList.remove('bounce');
+        void fab.offsetWidth;
+        fab.classList.add('bounce');
+    }
+
+    function searchMenu() {
+        const query = document.getElementById('search').value.toLowerCase();
+        const filtered = menuData.filter(i => i.name.toLowerCase().includes(query));
+        renderMenu(filtered);
+    }
+
+    function filterCat(cat) {
+        const filtered = menuData.filter(i => i.cat === cat);
+        renderMenu(filtered);
+    }
+
+    function sendOrder() {
+        if(cart.length === 0) return alert("Please add items first!");
+        const msg = encodeURIComponent("New Order from Evergreen Menu:\n" + cart.join("\n"));
+        window.open(`https://wa.me/971500000000?text=${msg}`);
+    }
+
+    renderMenu(menuData);
+</script>
+</body>
+</html>
